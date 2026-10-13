@@ -19,6 +19,7 @@ export async function callCatalogMcp(
       params: {
         name,
         arguments: {
+          ...(typeof args === "object" && args !== null ? args : {}),
           ...(shopDomain
             ? { shop_domain: shopDomain, store_domain: shopDomain }
             : {}),
@@ -27,7 +28,6 @@ export async function callCatalogMcp(
               profile: AGENT_PROFILE_URL,
             },
           },
-          ...(typeof args === "object" && args !== null ? args : {}),
         },
       },
     }),

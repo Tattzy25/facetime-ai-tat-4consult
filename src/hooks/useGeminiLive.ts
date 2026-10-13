@@ -1,9 +1,11 @@
 import { useCallback, useRef, useState } from "react";
 import { GoogleGenAI, Modality, type LiveServerMessage } from "@google/genai";
+import { toast } from "sonner";
 import { callCartMcp } from "../lib/MCP/cartCall";
 import { callCatalogMcp } from "../lib/MCP/catalogCall";
 import { callFaqMcp } from "../lib/MCP/faqCall";
 import { callCheckoutMcp } from "../lib/MCP/checkoutCall";
+
 import { AGENT_SHOP_TOOLS } from "../lib/GeminiTools";
 
 const INPUT_RATE = 16000;
@@ -526,7 +528,7 @@ export function useGeminiLive(
         });
 
         const session = await ai.live.connect({
-          model: systemMessageSettings.model,
+          model: systemMessageSettings.model || "gemini-3.1-flash-live-preview",
           config: {
             responseModalities: [Modality.AUDIO],
             systemInstruction: systemMessageSettings.systemInstruction,
@@ -704,7 +706,7 @@ export function useGeminiLive(
               setSessionDurationMs(0);
 
               if (!manualDisconnectRef.current) {
-                console.warn("Live session closed unexpectedly");
+                toast.error("Live session closed unexpectedly");
               }
 
               manualDisconnectRef.current = false;
@@ -723,7 +725,7 @@ export function useGeminiLive(
               setSessionDurationMs(0);
               manualDisconnectRef.current = true;
 
-              console.error("Live API error:", error);
+              toast.error(error instanceof Error ? error.message : "Live API error");
             },
           },
         });
@@ -741,7 +743,9 @@ export function useGeminiLive(
         setSessionDurationMs(0);
         manualDisconnectRef.current = false;
 
-        console.error("Failed to start the live session:", error);
+        toast.error(
+          error instanceof Error ? error.message : "Failed to start the live session",
+        );
       }
     },
     [

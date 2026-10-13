@@ -1,8 +1,0 @@
-{
-	"mcpServers": {
-		"cart-mcp-server": {
-			"url": "https://mcp-cart-agents.tattty.com/mcp",
-			"type": "http"
-		}
-	}
-}

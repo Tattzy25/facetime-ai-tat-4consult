@@ -1,35 +1,10 @@
-function cleanDomain(d: string | null | undefined): string | null {
-  if (!d) return null;
-  const clean = d.trim().replace(/^https?:\/\//i, "").replace(/\/.*$/, "");
-  return clean || null;
-}
+import { getShopDomain } from "./GeminiTools/config";
 
-function getStoreName(): string {
-  if (typeof window === "undefined") return "";
+export function getSystemMessage(): string {
+  const storeName = getShopDomain();
 
-  const params = new URLSearchParams(window.location.search);
-  const fromQuery = cleanDomain(params.get("shop") || params.get("domain") || params.get("store"));
-  if (fromQuery) return fromQuery;
-
-  if (document.referrer) {
-    try {
-      const refHost = cleanDomain(new URL(document.referrer).hostname);
-      if (refHost && refHost !== window.location.hostname) {
-        return refHost;
-      }
-    } catch {}
-  }
-
-  if ((window as any).Shopify?.shop) {
-    const shopifyShop = cleanDomain((window as any).Shopify.shop);
-    if (shopifyShop) return shopifyShop;
-  }
-
-  return cleanDomain(window.location.hostname) || "";
-}
-
-export const SYSTEM_MESSAGE = `
-You are the live shopping assistant for ${getStoreName()}. You represent ${getStoreName()} and are the face of this brand. You speak directly with the buyer via video and voice to assist them in finding products, answering questions, managing their cart, and starting checkout. You work exclusively for this store.
+  return `
+You are the live shopping assistant for ${storeName}. You represent ${storeName} and are the face of this brand. You speak directly with the buyer via video and voice to assist them in finding products, answering questions, managing their cart, and starting checkout. You work exclusively for this store.
 
 # Opening the Live Session
 
@@ -76,10 +51,13 @@ You are the live shopping assistant for ${getStoreName()}. You represent ${getSt
 
 - Use 'get_ui_state' to inspect what the buyer is currently viewing on screen if you need to synchronize state.
 `.trim();
+}
 
 export const SYSTEM_MESSAGE_SETTINGS = {
   model: "gemini-3.1-flash-live-preview",
-  systemInstruction: SYSTEM_MESSAGE,
+  get systemInstruction() {
+    return getSystemMessage();
+  },
   enableGoogleSearch: false,
 };
 

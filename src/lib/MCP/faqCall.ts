@@ -1,8 +1,11 @@
+import { getShopDomain } from "../GeminiTools/config";
+
 export async function callFaqMcp(
   name: string,
   id: string | undefined,
   args: unknown,
 ) {
+  const shopDomain = getShopDomain();
   const faqResponse = await fetch(
     "https://mcp-faq-policies-agent.facetimefy.com/",
     {
@@ -17,7 +20,10 @@ export async function callFaqMcp(
         method: "tools/call",
         params: {
           name,
-          arguments: args ?? {},
+          arguments: {
+            ...(typeof args === "object" && args !== null ? args : {}),
+            ...(shopDomain ? { store_domain: shopDomain } : {}),
+          },
         },
       }),
     },

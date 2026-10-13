@@ -30,10 +30,10 @@ export async function callCartMcp(
       params: {
         name,
         arguments: {
+          ...(typeof args === "object" && args !== null ? args : {}),
           ...(shopDomain
             ? { shop_domain: shopDomain, store_domain: shopDomain }
             : {}),
-          ...(typeof args === "object" && args !== null ? args : {}),
           meta: {
             "ucp-agent": {
               profile: AGENT_PROFILE_URL,

@@ -15,9 +15,17 @@ function cleanDomain(d: string | null | undefined): string | null {
 export function getShopDomain(): string {
   if (typeof window === "undefined") return "";
 
+  const liveCommerceShop = cleanDomain((window as any).LiveCommerceState?.shopDomain);
+  if (liveCommerceShop) return liveCommerceShop;
+
   const params = new URLSearchParams(window.location.search);
   const fromQuery = cleanDomain(params.get("shop") || params.get("domain") || params.get("store"));
   if (fromQuery) return fromQuery;
+
+  if ((window as any).Shopify?.shop) {
+    const shopifyShop = cleanDomain((window as any).Shopify.shop);
+    if (shopifyShop) return shopifyShop;
+  }
 
   if (document.referrer) {
     try {
@@ -26,11 +34,6 @@ export function getShopDomain(): string {
         return refHost;
       }
     } catch {}
-  }
-
-  if ((window as any).Shopify?.shop) {
-    const shopifyShop = cleanDomain((window as any).Shopify.shop);
-    if (shopifyShop) return shopifyShop;
   }
 
   return cleanDomain(window.location.hostname) || "";

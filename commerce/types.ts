@@ -137,6 +137,7 @@ export type CommerceIntent =
 
 /** Voice-agent-readable mirror of what is on screen right now. */
 export interface CommerceSnapshot {
+  shopDomain: string;
   stage: Stage;
   minimized: boolean;
   resultCount: number;

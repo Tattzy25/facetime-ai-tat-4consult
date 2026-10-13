@@ -61,6 +61,34 @@ const initials = (s: string) => s.split(/\s+/).slice(0, 2).map(w => w[0] ?? '').
 
 const NO_SB = 'lc-no-sb';   // hidden scrollbars (injected once below)
 
+function cleanDomain(d: string | null | undefined): string | null {
+  if (!d) return null;
+  const clean = d.trim().replace(/^https?:\/\//i, '').replace(/\/.*$/, '');
+  return clean || null;
+}
+
+function resolveShopDomain(): string {
+  if (typeof window === 'undefined') return '';
+
+  const params = new URLSearchParams(window.location.search);
+  const fromQuery = cleanDomain(params.get('shop') || params.get('domain') || params.get('store'));
+  if (fromQuery) return fromQuery;
+
+  if ((window as any).Shopify?.shop) {
+    const shopifyShop = cleanDomain((window as any).Shopify.shop);
+    if (shopifyShop) return shopifyShop;
+  }
+
+  if (document.referrer) {
+    try {
+      const refHost = cleanDomain(new URL(document.referrer).hostname);
+      if (refHost && refHost !== window.location.hostname) return refHost;
+    } catch {}
+  }
+
+  return cleanDomain(window.location.hostname) || '';
+}
+
 function Thumb({ p, className }: { p: Product; className?: string }) {
   const src = p.media[0];
   if (src) return <img src={src} alt="" className={cx('w-full h-full object-cover', className)} />;
@@ -233,6 +261,7 @@ const LiveCommerce = forwardRef<LiveCommerceHandle, LiveCommerceProps>(function 
   }, [active, selections]);
 
   const snapshot = useCallback((): CommerceSnapshot => ({
+    shopDomain: resolveShopDomain(),
     stage,
     minimized,
     resultCount: products.length,
