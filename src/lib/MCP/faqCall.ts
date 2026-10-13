@@ -13,7 +13,7 @@ export async function callFaqMcp(
       },
       body: JSON.stringify({
         jsonrpc: "2.0",
-        id,
+        id: 1,
         method: "tools/call",
         params: {
           name,
@@ -24,12 +24,6 @@ export async function callFaqMcp(
   );
 
   const faqRawBody = await faqResponse.text();
-
-  if (!faqResponse.ok) {
-    throw new Error(
-      `FAQ MCP failed (${faqResponse.status}): ${faqRawBody}`,
-    );
-  }
 
   return faqRawBody;
 }

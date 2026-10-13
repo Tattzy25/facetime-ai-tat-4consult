@@ -3,7 +3,7 @@ export const UI_TOOLS = [
     functionDeclarations: [
       {
         name: "get_ui_state",
-        description: "Retrieve the current state of the Commerce Layer. Use this tool to verify what the buyer is currently seeing on their screen, including selected product variants, cart contents, and the current stage of the shopping progression.",
+        description: "Retrieve the current visual screen display state. Use this tool to verify what products or search results the buyer is currently viewing on their screen.",
         parameters: {
           type: "OBJECT",
           properties: {},

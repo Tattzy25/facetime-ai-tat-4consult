@@ -1,10 +1,11 @@
-import { AGENT_PROFILE_URL, MCP_ENDPOINT } from "../GeminiTools/config";
+import { AGENT_PROFILE_URL, MCP_ENDPOINT, getShopDomain } from "../GeminiTools/config";
 
 export async function callCatalogMcp(
   name: string,
-  id: string,
+  id: string | undefined,
   args: unknown,
 ) {
+  const shopDomain = getShopDomain();
   const response = await fetch(MCP_ENDPOINT, {
     method: "POST",
     headers: {
@@ -13,17 +14,20 @@ export async function callCatalogMcp(
     },
     body: JSON.stringify({
       jsonrpc: "2.0",
-      id,
+      id: 1,
       method: "tools/call",
       params: {
         name,
         arguments: {
+          ...(shopDomain
+            ? { shop_domain: shopDomain, store_domain: shopDomain }
+            : {}),
           meta: {
             "ucp-agent": {
               profile: AGENT_PROFILE_URL,
             },
           },
-          ...(args ?? {}),
+          ...(typeof args === "object" && args !== null ? args : {}),
         },
       },
     }),

@@ -107,49 +107,48 @@ export default function App() {
           {/* Phone button (pre-call) / Dock (in-call) */}
           <AnimatePresence mode="wait">
             {!isConnected ? (
-              <motion.div
+              <motion.button
                 key="disconnected-screen"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-auto flex items-center justify-center w-64 h-11 rounded-full bg-black/80 backdrop-blur-xl border border-white shadow-[0_0_20px_rgba(0,0,0,0.8),inset_0_0_10px_rgba(255,255,255,0.1)]"
+                type="button"
+                onClick={() => startConnection("Aoede")}
+                disabled={status === "connecting"}
+                aria-label="Start call"
+                className={cn(
+                  "absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-20 pointer-events-auto",
+                  "flex items-center justify-center w-60 max-w-[calc(100vw-32px)] h-11 rounded-full",
+                  "bg-black/80 backdrop-blur-xl border border-white/80 shadow-[0_0_20px_rgba(0,0,0,0.8),inset_0_0_10px_rgba(255,255,255,0.1)]",
+                  "text-green-400 cursor-pointer active:scale-95 hover:border-white transition-all duration-300 touch-manipulation",
+                  status === "connecting" && "opacity-50 cursor-not-allowed"
+                )}
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <button
-                  type="button"
-                  onClick={() => startConnection("Aoede")}
-                  disabled={status === "connecting"}
-                  className={cn(
-                    "relative flex items-center justify-center p-0 text-green-400",
-                    "active:scale-95 transition-all duration-300 touch-manipulation",
-                    status === "connecting" ? "opacity-50 cursor-not-allowed" : "hover:scale-110 hover:text-green-300"
-                  )}
-                  style={{ WebkitTapHighlightColor: 'transparent' }}
-                >
-                  <div className="flex items-center justify-center leading-none">
-                    <PhoneCallIcon
-                      ref={phoneIconRef}
-                      className="w-8 h-8 md:w-10 md:h-10 block"
-                    />
-                  </div>
-                </button>
-              </motion.div>
+                <PhoneCallIcon
+                  ref={phoneIconRef}
+                  className="w-8 h-8 block pointer-events-none"
+                />
+              </motion.button>
             ) : (
-              <motion.div
+              <motion.button
                 key="connected-screen"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 pointer-events-auto flex items-center justify-center gap-8 w-64 h-11 rounded-full bg-black/80 backdrop-blur-xl border border-white shadow-[0_0_20px_rgba(0,0,0,0.8),inset_0_0_10px_rgba(255,255,255,0.1)]"
+                type="button"
+                onClick={disconnect}
+                aria-label="End call"
+                className={cn(
+                  "absolute bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-20 pointer-events-auto",
+                  "flex items-center justify-center w-60 max-w-[calc(100vw-32px)] h-11 rounded-full",
+                  "bg-black/80 backdrop-blur-xl border border-white/80 shadow-[0_0_20px_rgba(0,0,0,0.8),inset_0_0_10px_rgba(255,255,255,0.1)]",
+                  "text-red-500 cursor-pointer active:scale-90 hover:border-white transition-all duration-300 touch-manipulation"
+                )}
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <button
-                  type="button"
-                  onClick={disconnect}
-                  className="flex items-center justify-center active:scale-90 transition-all touch-manipulation"
-                  style={{ WebkitTapHighlightColor: 'transparent' }}
-                >
-                  <PhoneOff size={28} className="text-red-500" />
-                </button>
-              </motion.div>
+                <PhoneOff size={24} className="pointer-events-none" />
+              </motion.button>
             )}
           </AnimatePresence>
         </div>

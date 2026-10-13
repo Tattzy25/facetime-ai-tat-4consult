@@ -348,20 +348,20 @@ const LiveCommerce = forwardRef<LiveCommerceHandle, LiveCommerceProps>(function 
               {slice.map(card)}
             </div>
 
-            <div className="hidden items-center justify-center gap-3.5 pt-2 md:flex">
+            <div className="flex items-center justify-center gap-3.5 pt-2">
               <button type="button" disabled={page === 0} onClick={() => setPage(p => Math.max(0, p - 1))}
-                className="grid h-6 w-6 place-items-center rounded-full bg-white/10 text-white/80 hover:bg-white/20 disabled:opacity-30" aria-label="Previous 4 products">
-                <ChevronLeft size={13} />
+                className="grid h-7 w-7 place-items-center rounded-full bg-white/10 text-white/80 hover:bg-white/20 active:scale-95 disabled:opacity-30 touch-manipulation" aria-label="Previous products">
+                <ChevronLeft size={15} />
               </button>
-              <span className="flex gap-1.5">
+              <span className="flex gap-1.5 items-center">
                 {Array.from({ length: pages }, (_, i) => (
                   <button key={i} type="button" onClick={() => setPage(i)} aria-label={`Page ${i + 1}`}
-                    className={cx('h-1.5 rounded-full transition-all', i === page ? 'w-4 bg-white' : 'w-1.5 bg-white/30 hover:bg-white/60')} />
+                    className={cx('h-2 rounded-full transition-all touch-manipulation', i === page ? 'w-4 bg-white' : 'w-2 bg-white/30 hover:bg-white/60')} />
                 ))}
               </span>
               <button type="button" disabled={page >= pages - 1} onClick={() => setPage(p => Math.min(pages - 1, p + 1))}
-                className="grid h-6 w-6 place-items-center rounded-full bg-white/10 text-white/80 hover:bg-white/20 disabled:opacity-30" aria-label="Next 4 products">
-                <ChevronRight size={13} />
+                className="grid h-7 w-7 place-items-center rounded-full bg-white/10 text-white/80 hover:bg-white/20 active:scale-95 disabled:opacity-30 touch-manipulation" aria-label="Next products">
+                <ChevronRight size={15} />
               </button>
             </div>
           </motion.div>

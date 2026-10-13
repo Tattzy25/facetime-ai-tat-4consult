@@ -1,4 +1,4 @@
-import { AGENT_PROFILE_URL, CART_MCP_ENDPOINT } from "../GeminiTools/config";
+import { AGENT_PROFILE_URL, CART_MCP_ENDPOINT, getShopDomain } from "../GeminiTools/config";
 
 function parseMcpResponse(rawBody: string): unknown {
   const eventData = rawBody
@@ -13,9 +13,10 @@ function parseMcpResponse(rawBody: string): unknown {
 
 export async function callCartMcp(
   name: string,
-  id: string,
+  id: string | undefined,
   args: unknown,
 ) {
+  const shopDomain = getShopDomain();
   const response = await fetch(CART_MCP_ENDPOINT, {
     method: "POST",
     headers: {
@@ -24,17 +25,20 @@ export async function callCartMcp(
     },
     body: JSON.stringify({
       jsonrpc: "2.0",
-      id,
+      id: 1,
       method: "tools/call",
       params: {
         name,
         arguments: {
+          ...(shopDomain
+            ? { shop_domain: shopDomain, store_domain: shopDomain }
+            : {}),
+          ...(typeof args === "object" && args !== null ? args : {}),
           meta: {
             "ucp-agent": {
               profile: AGENT_PROFILE_URL,
             },
           },
-          ...(args ?? {}),
         },
       },
     }),
@@ -42,14 +46,7 @@ export async function callCartMcp(
 
   const rawBody = await response.text();
 
-  if (!response.ok) {
-    throw new Error(
-      `Cart MCP request failed: ${response.status} ${response.statusText}\n${rawBody}`,
-    );
-  }
-
-  console.log("[cart-mcp] raw response", rawBody);
-
+  
   return parseMcpResponse(rawBody);
 }
 
@@ -58,6 +55,5 @@ export function isCartTool(name: string): boolean {
     "create_cart",
     "get_cart",
     "update_cart",
-    "cancel_cart",
   ].includes(name);
 }

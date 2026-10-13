@@ -1,15 +1,10 @@
 import { useCallback, useRef, useState } from "react";
 import { GoogleGenAI, Modality, type LiveServerMessage } from "@google/genai";
-import { callCartMcp, isCartTool } from "../lib/MCP/cartCall";
+import { callCartMcp } from "../lib/MCP/cartCall";
 import { callCatalogMcp } from "../lib/MCP/catalogCall";
 import { callFaqMcp } from "../lib/MCP/faqCall";
-import { toast } from "sonner";
-
-import {
-  AGENT_SHOP_TOOLS,
-  AGENT_PROFILE_URL,
-  MCP_ENDPOINT,
-} from "../lib/GeminiTools";
+import { callCheckoutMcp } from "../lib/MCP/checkoutCall";
+import { AGENT_SHOP_TOOLS } from "../lib/GeminiTools";
 
 const INPUT_RATE = 16000;
 const OUTPUT_RATE = 24000;
@@ -531,7 +526,7 @@ export function useGeminiLive(
         });
 
         const session = await ai.live.connect({
-          model: systemMessageSettings.model || "gemini-3.1-flash-live-preview",
+          model: systemMessageSettings.model,
           config: {
             responseModalities: [Modality.AUDIO],
             systemInstruction: systemMessageSettings.systemInstruction,
@@ -566,63 +561,75 @@ export function useGeminiLive(
               beginSessionTracking();
             },
             onmessage: async (message: LiveServerMessage) => {
-              if (message.toolCall) {
-                const calls = message.toolCall.functionCalls;
-                if (!calls) return;
-
-                for (const call of calls) {
+              if (message.toolCall?.functionCalls) {
+                for (const call of message.toolCall.functionCalls) {
                   const { name, args, id } = call;
+                  if (!name) continue;
 
-                  if (isCartTool(name ?? "")) {
-                    const toolData = await callCartMcp(name as any, id ?? "", args);
+                  let toolData: unknown;
 
-                    (window as any).LiveCommerce?.ingest(toolData);
-                    onToolResult?.(toolData);
+                  switch (name) {
+                    case "create_cart":
+                    case "get_cart":
+                    case "update_cart": {
+                      toolData = await callCartMcp(name, id, args);
+                      break;
+                    }
 
-                    sessionRef.current?.sendToolResponse({
-                      functionResponses: [
-                        {
-                          name,
-                          id,
-                          response: { result: toolData },
-                        },
-                      ],
-                    });
+                    case "create_checkout":
+                    case "update_checkout": {
+                      toolData = await callCheckoutMcp(name, id, args);
+                      break;
+                    }
 
-                    continue;
+                    case "search_shop_policies_and_faqs": {
+                      const faqRawBody = await callFaqMcp(name, id, args);
+                      toolData = unwrapMcpResult(parseMcpResponse(faqRawBody));
+                      break;
+                    }
+
+                    case "search_catalog":
+                    case "get_product":
+                    case "lookup_catalog": {
+                      const mcpPayload = await callCatalogMcp(name, id, args);
+                      toolData = unwrapMcpResult(mcpPayload);
+                      break;
+                    }
+
+                    case "notify_cart_redirect":
+                    case "notify_checkout_redirect": {
+                      const state = (window as any).LiveCommerceState;
+                      const raw = state?.lastRaw;
+                      const fallbackCart = raw?.continue_url || raw?.cart?.continue_url || raw?.cart_url || state?.cart?.raw?.continue_url;
+                      const fallbackCheckout = state?.checkout?.url || raw?.checkout_url || raw?.continue_url || fallbackCart;
+                      const targetUrl = (args as any)?.url || (name === "notify_checkout_redirect" ? fallbackCheckout : fallbackCart);
+                      if (targetUrl && typeof window !== "undefined") {
+                        window.open(targetUrl, "_blank", "noopener,noreferrer");
+                      }
+                      toolData = { success: true, url: targetUrl };
+                      break;
+                    }
+
+                    case "get_ui_state": {
+                      const state = (window as any).LiveCommerceState;
+                      const localData = state ?? { ok: false, reason: "Commerce Layer not mounted yet." };
+                      sessionRef.current?.sendToolResponse({
+                        functionResponses: [
+                          {
+                            name,
+                            id,
+                            response: { result: localData },
+                          },
+                        ],
+                      });
+                      continue;
+                    }
+
+                    default:
+                      continue;
                   }
-
-                  if (
-                    name === "search_faq" ||
-                    name === "get_policy" ||
-                    name === "list_policies"
-                  ) {
-                    const faqRawBody = await callFaqMcp(name, id, args);
-                    const toolData = unwrapMcpResult(parseMcpResponse(faqRawBody));
-
-                    (window as any).LiveCommerce?.ingest(toolData);
-                    onToolResult?.(toolData);
-
-                    sessionRef.current?.sendToolResponse({
-                      functionResponses: [
-                        {
-                          name,
-                          id,
-                          response: { result: toolData },
-                        },
-                      ],
-                    });
-
-                    continue;
-                  }
-
-                  
-
-                  const mcpPayload = await callCatalogMcp(name ?? "", id ?? "", args);
-                  const toolData = unwrapMcpResult(mcpPayload);
 
                   (window as any).LiveCommerce?.ingest(toolData);
-
                   onToolResult?.(toolData);
 
                   sessionRef.current?.sendToolResponse({
@@ -697,7 +704,7 @@ export function useGeminiLive(
               setSessionDurationMs(0);
 
               if (!manualDisconnectRef.current) {
-                toast.error("Live session closed unexpectedly");
+                console.warn("Live session closed unexpectedly");
               }
 
               manualDisconnectRef.current = false;
@@ -716,7 +723,7 @@ export function useGeminiLive(
               setSessionDurationMs(0);
               manualDisconnectRef.current = true;
 
-              toast.error(error instanceof Error ? error.message : "Live API error");
+              console.error("Live API error:", error);
             },
           },
         });
@@ -734,9 +741,7 @@ export function useGeminiLive(
         setSessionDurationMs(0);
         manualDisconnectRef.current = false;
 
-        toast.error(
-          error instanceof Error ? error.message : "Failed to start the live session",
-        );
+        console.error("Failed to start the live session:", error);
       }
     },
     [

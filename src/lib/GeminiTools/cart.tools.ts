@@ -4,50 +4,30 @@ export const CART_TOOLS = [
       {
         name: "create_cart",
         description:
-          'Create a new merchant cart from one or more selected catalog variants. Use this after the buyer has chosen the exact products or variants they want, and before checkout. Provide the merchant MCP endpoint, the agent profile URL, and at least one line item. The response includes the merchant cart ID, validated line items, estimated totals, and typically a continue_url for the buyer to resume on the merchant storefront. Product item IDs should be the variant or product identifiers accepted by the target merchant MCP server. Prices returned by UCP commerce services are commonly expressed in ISO 4217 minor units, for example {"amount": 2500, "currency": "USD"} means $25.00.',
+          "Create a new cart with line items and optional buyer context. Use this when the buyer asks to place selected catalog products into a cart. The response includes the merchant-assigned cart ID, validated line items, estimated totals, and a 'continue_url' for continuing on the merchant's storefront.",
         parameters: {
           type: "OBJECT",
           properties: {
-            merchant_mcp_url: {
+            shop_domain: {
               type: "STRING",
               description:
-                "HTTPS URL for the selected merchant's MCP endpoint. This endpoint receives the forwarded JSON-RPC tools/call request.",
-            },
-            meta: {
-              type: "OBJECT",
-              description:
-                "UCP request metadata identifying the calling shopping agent.",
-              properties: {
-                "ucp-agent": {
-                  type: "OBJECT",
-                  properties: {
-                    profile: {
-                      type: "STRING",
-                      description:
-                        "Absolute URL for the shopping agent's UCP agent profile.",
-                    },
-                  },
-                  required: ["profile"],
-                },
-              },
-              required: ["ucp-agent"],
+                "The shop domain to call (no http:// or https://). This maps to https://{shop-domain}/api/ucp/mcp.",
             },
             cart: {
               type: "OBJECT",
-              description:
-                "The complete initial cart state to create. Unknown merchant-supported cart fields may also be accepted by the cart server.",
+              description: "The cart object containing the cart data.",
               properties: {
                 line_items: {
                   type: "ARRAY",
                   description:
-                    "One or more products or variants to add to the new cart.",
+                    "Array of items to add to the cart. Each item must include quantity and an item object with the product variant id.",
                   items: {
                     type: "OBJECT",
                     properties: {
                       quantity: {
                         type: "INTEGER",
                         description:
-                          "Number of units to add. Must be an integer of at least 1.",
+                          "The quantity to add for this line item.",
                       },
                       item: {
                         type: "OBJECT",
@@ -55,7 +35,7 @@ export const CART_TOOLS = [
                           id: {
                             type: "STRING",
                             description:
-                              "The merchant-supported product or variant ID, usually obtained from a prior catalog search, lookup, or product-details response.",
+                              "The product variant id for this line item.",
                           },
                         },
                         required: ["id"],
@@ -67,156 +47,112 @@ export const CART_TOOLS = [
                 context: {
                   type: "OBJECT",
                   description:
-                    "Optional buyer location, locale, and currency context used for availability, taxes, shipping estimates, or localized pricing.",
+                    "Localization hints including address_country, address_region, and postal_code. Merchants may use these as a signal for pricing, availability, and currency estimates, but context is not authoritative for shipping. If omitted, the merchant falls back to geo-IP.",
                   properties: {
                     address_country: {
                       type: "STRING",
                       description:
-                        "Buyer country, preferably an ISO 3166-1 alpha-2 code such as US or CA.",
+                        "Localization hint for the buyer country.",
                     },
                     address_region: {
                       type: "STRING",
                       description:
-                        "Buyer state, province, or region.",
+                        "Localization hint for the buyer region.",
                     },
                     postal_code: {
                       type: "STRING",
                       description:
-                        "Buyer postal or ZIP code.",
-                    },
-                    language: {
-                      type: "STRING",
-                      description:
-                        "Buyer language or locale preference, such as en or en-US.",
-                    },
-                    currency: {
-                      type: "STRING",
-                      description:
-                        "Requested ISO 4217 currency code, such as USD, CAD, or EUR.",
+                        "Localization hint for the buyer postal code.",
                     },
                   },
                 },
                 attribution: {
                   type: "OBJECT",
                   description:
-                    "Optional string key-value attribution data, such as campaign, source, or referral information.",
-                  additionalProperties: {
-                    type: "STRING",
+                    "Optional attribution metadata. Supported fields include referring_domain, click_id_tag, click_id_value, activity_id_tag, activity_id_value, utm_campaign, utm_source, utm_medium, utm_content, and utm_term.",
+                  properties: {
+                    referring_domain: { type: "STRING" },
+                    click_id_tag: { type: "STRING" },
+                    click_id_value: { type: "STRING" },
+                    activity_id_tag: { type: "STRING" },
+                    activity_id_value: { type: "STRING" },
+                    utm_campaign: { type: "STRING" },
+                    utm_source: { type: "STRING" },
+                    utm_medium: { type: "STRING" },
+                    utm_content: { type: "STRING" },
+                    utm_term: { type: "STRING" },
                   },
                 },
                 buyer: {
                   type: "OBJECT",
                   description:
-                    "Optional merchant-supported buyer information. Only include data necessary for the requested commerce flow.",
-                  additionalProperties: true,
+                    "Optional buyer information for personalized estimates.",
                 },
                 signals: {
                   type: "OBJECT",
                   description:
-                    "Optional merchant-supported agent or buyer signals.",
-                  additionalProperties: true,
+                    "Optional platform-provided environment data for authorization and abuse prevention.",
                 },
               },
               required: ["line_items"],
             },
           },
-          required: ["merchant_mcp_url", "meta", "cart"],
+          required: ["shop_domain", "cart"],
         },
       },
 
       {
         name: "get_cart",
         description:
-          "Retrieve the latest state of an existing merchant cart. Use this before presenting totals, confirming cart contents, or starting checkout—especially after time has passed or a cart context may have changed. Provide the same merchant MCP endpoint and UCP agent metadata used for the cart flow, plus the merchant cart ID returned by create_cart. If the cart is expired, missing, or canceled, the merchant can return a successful JSON-RPC response containing an unrecoverable not_found business error.",
+          "Retrieve the current state of an existing cart. Use this to review its contents, refresh estimated totals, or obtain the current full state before an update. If the cart does not exist or has expired, the tool may return a successful JSON-RPC result whose messages array contains an unrecoverable error with code 'not_found'. Check the returned business outcome rather than assuming that a successful transport response means the cart exists.",
         parameters: {
           type: "OBJECT",
           properties: {
-            merchant_mcp_url: {
+            shop_domain: {
               type: "STRING",
               description:
-                "HTTPS URL for the merchant MCP endpoint that owns the cart.",
-            },
-            meta: {
-              type: "OBJECT",
-              description:
-                "UCP request metadata identifying the calling shopping agent.",
-              properties: {
-                "ucp-agent": {
-                  type: "OBJECT",
-                  properties: {
-                    profile: {
-                      type: "STRING",
-                      description:
-                        "Absolute URL for the shopping agent's UCP agent profile.",
-                    },
-                  },
-                  required: ["profile"],
-                },
-              },
-              required: ["ucp-agent"],
+                "The shop domain to call (no http:// or https://). This maps to https://{shop-domain}/api/ucp/mcp.",
             },
             id: {
               type: "STRING",
-              description:
-                "Merchant-assigned cart ID returned by a prior create_cart response.",
+              description: "The ID of the cart to retrieve.",
             },
           },
-          required: ["merchant_mcp_url", "meta", "id"],
+          required: ["shop_domain", "id"],
         },
       },
 
       {
         name: "update_cart",
         description:
-          "Replace the complete state of an existing merchant cart. Use this when the buyer changes quantity, selected variants, shipping/location context, attribution, buyer information, or other cart state. This operation uses PUT semantics: the submitted cart becomes the complete cart state. Omitted fields are removed rather than merged with the existing cart, so always send every field that should remain. Provide at least one line item; to remove products, submit the desired remaining line items. To remove the cart entirely, use cancel_cart only after the buyer explicitly asks to cancel.",
+          "Replace the contents of an existing cart. This tool uses PUT semantics: every request replaces the cart's full state with the supplied payload. Omitted fields, including 'line_items' or 'context', are removed. There is no server-side merge of partial updates. Preserve all existing state that the user has not asked to change.",
         parameters: {
           type: "OBJECT",
           properties: {
-            merchant_mcp_url: {
+            shop_domain: {
               type: "STRING",
               description:
-                "HTTPS URL for the merchant MCP endpoint that owns the cart.",
-            },
-            meta: {
-              type: "OBJECT",
-              description:
-                "UCP request metadata identifying the calling shopping agent.",
-              properties: {
-                "ucp-agent": {
-                  type: "OBJECT",
-                  properties: {
-                    profile: {
-                      type: "STRING",
-                      description:
-                        "Absolute URL for the shopping agent's UCP agent profile.",
-                    },
-                  },
-                  required: ["profile"],
-                },
-              },
-              required: ["ucp-agent"],
+                "The shop domain to call (no http:// or https://). This maps to https://{shop-domain}/api/ucp/mcp.",
             },
             id: {
               type: "STRING",
-              description:
-                "Merchant-assigned cart ID returned by create_cart.",
+              description: "The ID of the cart to update.",
             },
             cart: {
               type: "OBJECT",
               description:
-                "The full replacement cart state. Fields omitted from this object are removed from the cart.",
+                "The cart object containing the full desired cart state. Any field you omit is removed from the cart. update_cart uses PUT semantics and does not merge partial updates.",
               properties: {
                 line_items: {
                   type: "ARRAY",
-                  description:
-                    "The complete replacement list of cart items. Must contain at least one item.",
+                  description: "Full replacement array of items.",
                   items: {
                     type: "OBJECT",
                     properties: {
                       quantity: {
                         type: "INTEGER",
                         description:
-                          "Number of units for this item. Must be an integer of at least 1.",
+                          "The full replacement quantity for this line item.",
                       },
                       item: {
                         type: "OBJECT",
@@ -224,7 +160,7 @@ export const CART_TOOLS = [
                           id: {
                             type: "STRING",
                             description:
-                              "Merchant-supported product or variant ID.",
+                              "The product variant id for this line item.",
                           },
                         },
                         required: ["id"],
@@ -236,106 +172,69 @@ export const CART_TOOLS = [
                 context: {
                   type: "OBJECT",
                   description:
-                    "Optional replacement buyer location, locale, and currency context.",
+                    "Localization signals. Context is a hint for pricing, availability, and currency and is not used as the shipping address at checkout.",
                   properties: {
                     address_country: {
                       type: "STRING",
                       description:
-                        "Buyer country, preferably an ISO 3166-1 alpha-2 code.",
+                        "Localization signal for the buyer country.",
                     },
                     address_region: {
                       type: "STRING",
                       description:
-                        "Buyer state, province, or region.",
+                        "Localization signal for the buyer region.",
                     },
                     postal_code: {
                       type: "STRING",
                       description:
-                        "Buyer postal or ZIP code.",
-                    },
-                    language: {
-                      type: "STRING",
-                      description:
-                        "Buyer language or locale preference, such as en or en-US.",
-                    },
-                    currency: {
-                      type: "STRING",
-                      description:
-                        "Requested ISO 4217 currency code, such as USD.",
+                        "Localization signal for the buyer postal code.",
                     },
                   },
                 },
                 attribution: {
                   type: "OBJECT",
                   description:
-                    "Optional replacement string key-value attribution data.",
-                  additionalProperties: {
-                    type: "STRING",
+                    "Attribution metadata. Because the cart object is replaced, resend attribution if you want to preserve it.",
+                  properties: {
+                    referring_domain: { type: "STRING" },
+                    click_id_tag: { type: "STRING" },
+                    click_id_value: { type: "STRING" },
+                    activity_id_tag: { type: "STRING" },
+                    activity_id_value: { type: "STRING" },
+                    utm_campaign: { type: "STRING" },
+                    utm_source: { type: "STRING" },
+                    utm_medium: { type: "STRING" },
+                    utm_content: { type: "STRING" },
+                    utm_term: { type: "STRING" },
                   },
                 },
                 buyer: {
                   type: "OBJECT",
-                  description:
-                    "Optional replacement merchant-supported buyer information.",
-                  additionalProperties: true,
+                  description: "Optional buyer information.",
                 },
                 signals: {
                   type: "OBJECT",
-                  description:
-                    "Optional replacement merchant-supported agent or buyer signals.",
-                  additionalProperties: true,
+                  description: "Optional platform signals.",
                 },
               },
               required: ["line_items"],
             },
           },
-          required: ["merchant_mcp_url", "meta", "id", "cart"],
+          required: ["shop_domain", "id", "cart"],
         },
       },
-
       {
-        name: "cancel_cart",
+        name: "notify_cart_redirect",
         description:
-          "Permanently cancel an existing merchant cart. Use this only when the buyer explicitly asks to cancel or discard their cart. Cancellation removes the cart from merchant storage, and subsequent get_cart calls for the same ID should return a not_found business outcome. Supply a new UUID idempotency key for this cancellation request so retrying a network-failed request does not cause unintended duplicate cancellation behavior.",
+          "Open the buyer's current cart on the merchant storefront in a new tab. Call this ONLY when the buyer explicitly asks to see or edit their cart or to review their running total. Do NOT call this merely because an item was added to the cart — assume the buyer is still browsing until they say otherwise.",
         parameters: {
           type: "OBJECT",
           properties: {
-            merchant_mcp_url: {
+            url: {
               type: "STRING",
-              description:
-                "HTTPS URL for the merchant MCP endpoint that owns the cart.",
-            },
-            meta: {
-              type: "OBJECT",
-              description:
-                "UCP request metadata identifying the calling shopping agent and this idempotent cancellation operation.",
-              properties: {
-                "ucp-agent": {
-                  type: "OBJECT",
-                  properties: {
-                    profile: {
-                      type: "STRING",
-                      description:
-                        "Absolute URL for the shopping agent's UCP agent profile.",
-                    },
-                  },
-                  required: ["profile"],
-                },
-                "idempotency-key": {
-                  type: "STRING",
-                  description:
-                    "A UUID generated for this cancellation request. Reuse the same value only when retrying this exact cancellation after an uncertain transport failure.",
-                },
-              },
-              required: ["ucp-agent", "idempotency-key"],
-            },
-            id: {
-              type: "STRING",
-              description:
-                "Merchant-assigned cart ID to permanently cancel.",
+              description: "The optional cart URL or continuation URL to open.",
             },
           },
-          required: ["merchant_mcp_url", "meta", "id"],
         },
       },
     ],

@@ -4,7 +4,7 @@ export const CATALOG_TOOLS = [
       {
         name: "search_catalog",
         description:
-          'Search for products across multiple Shopify stores in the global catalog. Use this tool when buyers are searching for products without specifying a particular store. Examples: "I\'m looking for a pair of running shoes", "Find me some wireless headphones under $100", "Search for organic coffee beans". Input and response conform to the UCP catalog search capability (dev.ucp.shopping.catalog.search). Prices in the response are integers in the currency\'s ISO 4217 minor units, paired with a currency code: {"amount": 600, "currency": "USD"} is $6.00 and {"amount": 2500, "currency": "USD"} is $25.00. Convert to major units before quoting a price to a buyer (divide by 100 for two-decimal currencies such as USD and EUR; zero-decimal currencies such as JPY are already whole units).',
+          'Searches the store\'s product catalog. Use when a customer asks "Do you have any organic coffee?", when you need to find products matching specific criteria, or when a customer wants to browse items in a category. Input conforms to dev.ucp.shopping.catalog.search. Response conforms to the UCP catalog search response including products with title, description, price range (minor units), media, and variants. Prices in the response are integers in the currency\'s ISO 4217 minor units, paired with a currency code: {"amount": 600, "currency": "USD"} is $6.00 and {"amount": 2500, "currency": "USD"} is $25.00. Convert to major units before quoting a price to a buyer (divide by 100 for two-decimal currencies such as USD and EUR; zero-decimal currencies such as JPY are already whole units).',
         parameters: {
           type: "OBJECT",
           properties: {
@@ -14,7 +14,7 @@ export const CATALOG_TOOLS = [
                 query: {
                   type: "STRING",
                   description:
-                    "Free-text product search query. This may be an empty string when using other catalog search inputs.",
+                    'Free-text search query. For example, "organic coffee beans", "winter jacket". This may be an empty string when using other search inputs.',
                 },
                 filters: {
                   type: "OBJECT",
@@ -48,12 +48,12 @@ export const CATALOG_TOOLS = [
                     limit: {
                       type: "INTEGER",
                       description:
-                        "Maximum number of catalog results to return.",
+                        "Maximum number of catalog results to return (min 1, default 10, max 250).",
                     },
                     cursor: {
                       type: "STRING",
                       description:
-                        "Cursor from a previous search result page.",
+                        "Opaque cursor from a previous search result page.",
                     },
                   },
                 },
@@ -66,7 +66,7 @@ export const CATALOG_TOOLS = [
       {
         name: "get_product",
         description:
-          'Retrieve details about a specific product across multiple Shopify stores. Use this tool when buyers are interested in a particular product. Examples: "What are the details of the iPhone 12?", "Tell me about the Sony WH-1000XM4 headphones". Input and response conform to the UCP product details capability (dev.ucp.shopping.product.details). Prices in the response are integers in the currency\'s ISO 4217 minor units, paired with a currency code: {"amount": 600, "currency": "USD"} is $6.00 and {"amount": 2500, "currency": "USD"} is $25.00. Convert to major units before quoting a price to a buyer (divide by 100 for two-decimal currencies such as USD and EUR; zero-decimal currencies such as JPY are already whole units).',
+          'Retrieves full details for a single product from the store\'s product catalog. Use when a customer has selected a product and needs full details, when you need to check variant options with availability signals, or when a customer is making option selections (Color, Size, etc.). Input conforms to dev.ucp.shopping.catalog.lookup. Prices in the response are integers in the currency\'s ISO 4217 minor units, paired with a currency code: {"amount": 600, "currency": "USD"} is $6.00 and {"amount": 2500, "currency": "USD"} is $25.00. Convert to major units before quoting a price to a buyer (divide by 100 for two-decimal currencies such as USD and EUR; zero-decimal currencies such as JPY are already whole units).',
         parameters: {
           type: "OBJECT",
           properties: {
@@ -76,7 +76,7 @@ export const CATALOG_TOOLS = [
                 id: {
                   type: "STRING",
                   description:
-                    "The product identifier returned by a prior global catalog result.",
+                    'Product or variant identifier returned by a prior catalog result. For example, "gid://shopify/Product/123".',
                 },
               },
               required: ["id"],
@@ -88,7 +88,7 @@ export const CATALOG_TOOLS = [
       {
         name: "lookup_catalog",
         description:
-          'Look up multiple products or variants by identifier from the global catalog. Use this tool to resolve multiple product/variant IDs in a single request. Supports: Product IDs (gid://shopify/p/{id}): Returns product with one featured variant. Variant IDs (gid://shopify/ProductVariant/{id}): Returns parent product with the exact variant. Results are grouped by product. Each variant includes an input array showing which request ID resolved to it and whether the match was exact or featured. Examples: resolving a list of product IDs from search results, validating multiple cart items in one call, and looking up products from deep links or saved lists. Input and response conform to the UCP catalog lookup capability (dev.ucp.shopping.catalog.lookup). Prices in the response are integers in the currency\'s ISO 4217 minor units, paired with a currency code: {"amount": 600, "currency": "USD"} is $6.00 and {"amount": 2500, "currency": "USD"} is $25.00. Convert to major units before quoting a price to a buyer (divide by 100 for two-decimal currencies such as USD and EUR; zero-decimal currencies such as JPY are already whole units).',
+          'Retrieve products or variants by identifier from the store\'s product catalog. Use when you have product or variant IDs from search results or deep links, when you need to resolve multiple identifiers in a single request, or when validating cart items against current catalog data. Supports Product IDs (gid://shopify/Product/{id}) and Variant IDs (gid://shopify/ProductVariant/{id}). Input and response conform to dev.ucp.shopping.catalog.lookup. Prices in the response are integers in the currency\'s ISO 4217 minor units, paired with a currency code: {"amount": 600, "currency": "USD"} is $6.00 and {"amount": 2500, "currency": "USD"} is $25.00. Convert to major units before quoting a price to a buyer (divide by 100 for two-decimal currencies such as USD and EUR; zero-decimal currencies such as JPY are already whole units).',
         parameters: {
           type: "OBJECT",
           properties: {
@@ -99,7 +99,7 @@ export const CATALOG_TOOLS = [
                   type: "ARRAY",
                   items: { type: "STRING" },
                   description:
-                    "Product or variant identifiers from prior catalog results.",
+                    'Array of product or variant identifiers from prior catalog results (up to 10). For example, ["gid://shopify/Product/123"].',
                 },
               },
               required: ["ids"],
