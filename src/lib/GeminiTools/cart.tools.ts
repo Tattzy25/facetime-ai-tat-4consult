@@ -3,8 +3,7 @@ export const CART_TOOLS = [
     functionDeclarations: [
       {
         name: "create_cart",
-        description:
-          "Create a new cart with line items and optional buyer context. Use this when the buyer asks to place selected catalog products into a cart. The response includes the merchant-assigned cart ID, validated line items, estimated totals, and a 'continue_url' for continuing on the merchant's storefront.",
+        description: "Create a new cart with line items and optional buyer context. Use this when the buyer asks to place selected catalog products into a cart. Do not send an id argument. A new cart has no cart ID. The response includes the merchant-assigned cart ID, validated line items, estimated totals, and a 'continue_url' for continuing on the merchant's storefront.",
         parameters: {
           type: "OBJECT",
           properties: {
@@ -102,30 +101,9 @@ export const CART_TOOLS = [
       },
 
       {
-        name: "get_cart",
-        description:
-          "Retrieve the current state of an existing cart. Use this to review its contents, refresh estimated totals, or obtain the current full state before an update. If the cart does not exist or has expired, the tool may return a successful JSON-RPC result whose messages array contains an unrecoverable error with code 'not_found'. Check the returned business outcome rather than assuming that a successful transport response means the cart exists.",
-        parameters: {
-          type: "OBJECT",
-          properties: {
-            shop_domain: {
-              type: "STRING",
-              description:
-                "The shop domain to call (no http:// or https://). This maps to https://{shop-domain}/api/ucp/mcp.",
-            },
-            id: {
-              type: "STRING",
-              description: "The ID of the cart to retrieve.",
-            },
-          },
-          required: ["shop_domain", "id"],
-        },
-      },
-
-      {
         name: "update_cart",
         description:
-          "Replace the contents of an existing cart. This tool uses PUT semantics: every request replaces the cart's full state with the supplied payload. Omitted fields, including 'line_items' or 'context', are removed. There is no server-side merge of partial updates. Preserve all existing state that the user has not asked to change.",
+          "Replace the contents of an existing cart. This tool uses PUT semantics: every request replaces the cart's full state with the supplied payload. Omitted fields, including 'line_items' or 'context', are removed. There is no server-side merge of partial updates. Preserve all existing state that the user has not asked to change. The response returns the updated cart state and a fresh continue_url.",
         parameters: {
           type: "OBJECT",
           properties: {
@@ -136,7 +114,7 @@ export const CART_TOOLS = [
             },
             id: {
               type: "STRING",
-              description: "The ID of the cart to update.",
+              description: "The Shopify cart GID to update. Use only the gid://shopify/Cart/... value returned by create_cart, update_cart, or get_cart.",
             },
             cart: {
               type: "OBJECT",
@@ -145,7 +123,7 @@ export const CART_TOOLS = [
               properties: {
                 line_items: {
                   type: "ARRAY",
-                  description: "Full replacement array of items.",
+                  description: "Full replacement array of items. Preserve all existing lines that should remain in the cart.",
                   items: {
                     type: "OBJECT",
                     properties: {
@@ -224,17 +202,23 @@ export const CART_TOOLS = [
         },
       },
       {
-        name: "notify_cart_redirect",
+        name: "get_cart",
         description:
-          "Open the buyer's current cart on the merchant storefront in a new tab. Call this ONLY when the buyer explicitly asks to see or edit their cart or to review their running total. Do NOT call this merely because an item was added to the cart — assume the buyer is still browsing until they say otherwise.",
+          "Retrieve the current state of an existing cart. Use this before cart or checkout redirects, when the buyer asks what is in the cart, asks for the running cart total, or returns to the conversation. The response returns the current cart state and a fresh continue_url. If messages contains severity 'unrecoverable' or code 'cart_not_found', do not redirect.",
         parameters: {
           type: "OBJECT",
           properties: {
-            url: {
+            shop_domain: {
               type: "STRING",
-              description: "The optional cart URL or continuation URL to open.",
+              description:
+                "The shop domain to call (no http:// or https://). This maps to https://{shop-domain}/api/ucp/mcp.",
+            },
+            id: {
+              type: "STRING",
+              description: "The Shopify cart GID to retrieve. Use only the gid://shopify/Cart/... value returned by create_cart, update_cart, or get_cart.",
             },
           },
+          required: ["shop_domain", "id"],
         },
       },
     ],

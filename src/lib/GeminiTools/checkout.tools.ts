@@ -261,20 +261,6 @@ export const CHECKOUT_TOOLS = [
           required: ["shop_domain", "id", "checkout"],
         },
       },
-      {
-        name: "notify_checkout_redirect",
-        description:
-          "Open checkout for the buyer's current cart on the merchant storefront in a new tab. Call this ONLY when the buyer confirms they are ready to pay and complete their purchase. Do NOT call this merely because a cart or checkout tool returned a checkout or continuation URL — wait for the buyer to say they are ready. You are also capable of creating out and redirecting the user if they explicitly get the complete total Then they can always click on back and come right back to you. That doesn't mean it's a check out or what not.",
-        parameters: {
-          type: "OBJECT",
-          properties: {
-            url: {
-              type: "STRING",
-              description: "The optional checkout URL or continuation URL to open.",
-            },
-          },
-        },
-      },
     ],
   },
 ] as const;

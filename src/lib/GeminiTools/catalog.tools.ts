@@ -4,7 +4,7 @@ export const CATALOG_TOOLS = [
       {
         name: "search_catalog",
         description:
-          'Searches the store\'s product catalog. Use when a customer asks "Do you have any organic coffee?", when you need to find products matching specific criteria, or when a customer wants to browse items in a category. Input conforms to dev.ucp.shopping.catalog.search. Response conforms to the UCP catalog search response including products with title, description, price range (minor units), media, and variants. Prices in the response are integers in the currency\'s ISO 4217 minor units, paired with a currency code: {"amount": 600, "currency": "USD"} is $6.00 and {"amount": 2500, "currency": "USD"} is $25.00. Convert to major units before quoting a price to a buyer (divide by 100 for two-decimal currencies such as USD and EUR; zero-decimal currencies such as JPY are already whole units).',
+          'Searches the selected merchant store\'s product catalog. Use when a customer asks "Do you have any organic coffee?", when you need to find products matching specific criteria, or when a customer wants to browse items in a category. Input conforms to dev.ucp.shopping.catalog.search. Response conforms to the UCP catalog search response including products with title, description, price range (minor units), media, and variants. Prices in the response are integers in the currency\'s ISO 4217 minor units, paired with a currency code: {"amount": 600, "currency": "USD"} is $6.00 and {"amount": 2500, "currency": "USD"} is $25.00. Convert to major units before quoting a price to a buyer (divide by 100 for two-decimal currencies such as USD and EUR; zero-decimal currencies such as JPY are already whole units).',
         parameters: {
           type: "OBJECT",
           properties: {
@@ -66,7 +66,7 @@ export const CATALOG_TOOLS = [
       {
         name: "get_product",
         description:
-          'Retrieves full details for a single product from the store\'s product catalog. Use when a customer has selected a product and needs full details, when you need to check variant options with availability signals, or when a customer is making option selections (Color, Size, etc.). Input conforms to dev.ucp.shopping.catalog.lookup. Prices in the response are integers in the currency\'s ISO 4217 minor units, paired with a currency code: {"amount": 600, "currency": "USD"} is $6.00 and {"amount": 2500, "currency": "USD"} is $25.00. Convert to major units before quoting a price to a buyer (divide by 100 for two-decimal currencies such as USD and EUR; zero-decimal currencies such as JPY are already whole units).',
+          'Retrieves full details for a single product from the selected merchant store\'s product catalog. Use when a customer has selected a product and needs full details, when you need to check variant options with availability signals, or when a customer is making option selections (Color, Size, etc.). Input conforms to dev.ucp.shopping.catalog.get_product. Prices in the response are integers in the currency\'s ISO 4217 minor units, paired with a currency code: {"amount": 600, "currency": "USD"} is $6.00 and {"amount": 2500, "currency": "USD"} is $25.00. Convert to major units before quoting a price to a buyer (divide by 100 for two-decimal currencies such as USD and EUR; zero-decimal currencies such as JPY are already whole units).',
         parameters: {
           type: "OBJECT",
           properties: {
@@ -88,7 +88,7 @@ export const CATALOG_TOOLS = [
       {
         name: "lookup_catalog",
         description:
-          'Retrieve products or variants by identifier from the store\'s product catalog. Use when you have product or variant IDs from search results or deep links, when you need to resolve multiple identifiers in a single request, or when validating cart items against current catalog data. Supports Product IDs (gid://shopify/Product/{id}) and Variant IDs (gid://shopify/ProductVariant/{id}). Input and response conform to dev.ucp.shopping.catalog.lookup. Prices in the response are integers in the currency\'s ISO 4217 minor units, paired with a currency code: {"amount": 600, "currency": "USD"} is $6.00 and {"amount": 2500, "currency": "USD"} is $25.00. Convert to major units before quoting a price to a buyer (divide by 100 for two-decimal currencies such as USD and EUR; zero-decimal currencies such as JPY are already whole units).',
+          'Retrieve products or variants by identifier from the selected merchant store\'s product catalog. Use when you have product or variant IDs from search results or deep links, when you need to resolve multiple identifiers in a single request, or when validating cart items against current catalog data. Supports Product IDs (gid://shopify/Product/{id}) and Variant IDs (gid://shopify/ProductVariant/{id}). Input and response conform to dev.ucp.shopping.catalog.lookup. Prices in the response are integers in the currency\'s ISO 4217 minor units, paired with a currency code: {"amount": 600, "currency": "USD"} is $6.00 and {"amount": 2500, "currency": "USD"} is $25.00. Convert to major units before quoting a price to a buyer (divide by 100 for two-decimal currencies such as USD and EUR; zero-decimal currencies such as JPY are already whole units).',
         parameters: {
           type: "OBJECT",
           properties: {

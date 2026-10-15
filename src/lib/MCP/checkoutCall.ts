@@ -1,4 +1,4 @@
-import { AGENT_PROFILE_URL, CHECKOUT_MCP_ENDPOINT, getShopDomain } from "../GeminiTools/config";
+import { CHECKOUT_MCP_ENDPOINT, getShopDomain } from "../GeminiTools/config";
 
 function parseMcpResponse(rawBody: string): unknown {
   const eventData = rawBody
@@ -17,11 +17,12 @@ export async function callCheckoutMcp(
   args: unknown,
 ) {
   const shopDomain = getShopDomain();
+
   const response = await fetch(CHECKOUT_MCP_ENDPOINT, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Accept: "application/json, text/event-stream"
+      Accept: "application/json, text/event-stream",
     },
     body: JSON.stringify({
       jsonrpc: "2.0",
@@ -30,15 +31,8 @@ export async function callCheckoutMcp(
       params: {
         name,
         arguments: {
+          ...(shopDomain ? { shop_domain: shopDomain } : {}),
           ...(typeof args === "object" && args !== null ? args : {}),
-          ...(shopDomain
-            ? { shop_domain: shopDomain, store_domain: shopDomain }
-            : {}),
-          meta: {
-            "ucp-agent": {
-              profile: AGENT_PROFILE_URL,
-            },
-          },
         },
       },
     }),

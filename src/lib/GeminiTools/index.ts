@@ -1,7 +1,4 @@
-export {
-  AGENT_PROFILE_URL,
-  MCP_ENDPOINT,
-} from "./config";
+export { MCP_ENDPOINT } from "./config";
 
 import { CATALOG_TOOLS } from "./catalog.tools";
 import { CART_TOOLS } from "./cart.tools";

@@ -1,16 +1,16 @@
-import { AGENT_PROFILE_URL, MCP_ENDPOINT, getShopDomain } from "../GeminiTools/config";
-
+import { MCP_ENDPOINT, getShopDomain } from "../GeminiTools/config";
 export async function callCatalogMcp(
   name: string,
   id: string | undefined,
   args: unknown,
 ) {
   const shopDomain = getShopDomain();
+
   const response = await fetch(MCP_ENDPOINT, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Accept: "application/json, text/event-stream"
+      Accept: "application/json, text/event-stream",
     },
     body: JSON.stringify({
       jsonrpc: "2.0",
@@ -20,24 +20,28 @@ export async function callCatalogMcp(
         name,
         arguments: {
           ...(typeof args === "object" && args !== null ? args : {}),
-          ...(shopDomain
-            ? { shop_domain: shopDomain, store_domain: shopDomain }
-            : {}),
-          meta: {
-            "ucp-agent": {
-              profile: AGENT_PROFILE_URL,
-            },
-          },
+          ...(shopDomain ? { domain: shopDomain } : {}),
         },
       },
     }),
   });
 
   const rawBody = await response.text();
-  return JSON.parse(
-  rawBody
-    .split(/\r?\n/)
-    .find((line) => line.startsWith("data:"))
-    ?.replace(/^data:\s*/, "") || rawBody,
-);
+
+  const result = JSON.parse(
+    rawBody
+      .split(/\r?\n/)
+      .find((line) => line.startsWith("data:"))
+      ?.replace(/^data:\s*/, "") || rawBody,
+  );
+
+  if (result?.content?.[0]?.type === "text") {
+    try {
+      return JSON.parse(result.content[0].text);
+    } catch {
+      return result;
+    }
+  }
+
+  return result;
 }
